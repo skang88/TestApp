@@ -1,23 +1,17 @@
-# Use an official Node.js runtime as a parent image
-FROM node:14
-
-# Set the working directory in the container to /app
+# 1단계: React 앱 빌드 (Node 환경)
+FROM node:24 AS builder
 WORKDIR /app
-
-# Copy package.json and package-lock.json
 COPY package*.json ./
-
-# Install any needed packages specified in package.json
 RUN npm install
-
-# Bundle app source inside Docker image
 COPY . .
-
-# Build the React application
 RUN npm run build
 
-# Use nginx to serve the static files
+# 2단계: 빌드된 정적 파일 서빙 (Nginx 환경)
 FROM nginx:alpine
 COPY --from=0 /app/build /usr/share/nginx/html
-EXPOSE 3000
-CMD ["npm", "start"]
+
+# Nginx의 기본 포트인 80번을 열어줍니다 (기존 3000에서 변경 추천)
+EXPOSE 80
+
+# Nginx 서버를 백그라운드가 아닌 포어그라운드로 실행하여 컨테이너가 유지되도록 합니다
+CMD ["nginx", "-g", "daemon off;"]
